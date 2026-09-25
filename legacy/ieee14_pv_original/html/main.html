@@ -1,0 +1,573 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>main</title><meta name="generator" content="MATLAB 9.1"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2025-03-11"><meta name="DC.source" content="main.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#2"><b>*Step 1: Load PV Data from File</b>*</a></li><li><a href="#3"><b>*Step 3: Integrate PV at Bus 3</b>*</a></li><li><a href="#4">CPF Setup</a></li><li><a href="#5">Compute Scheduled Power Values</a></li><li><a href="#6">CPF - Phase 1: Using Load Change as Continuation Factor</a></li><li><a href="#7">CPF - Phase 2: Changing the Continuation Parameter to Voltage at a Bus</a></li><li><a href="#8">CPF - Phase 3: Reverting the Continuation Parameter Back to Power</a></li><li><a href="#9">Plot Loadability Curve</a></li></ul></div><pre class="codeinput"><span class="comment">% CPF with PV Integration</span>
+
+clc;
+clear <span class="string">all</span>;
+close <span class="string">all</span>;
+
+<span class="comment">% Read system data (this should load BusData and BranchData)</span>
+ReadData;
+</pre><h2 id="2"><b>*Step 1: Load PV Data from File</b>*</h2><pre class="codeinput">load(<span class="string">'PVData.mat'</span>, <span class="string">'P_pv'</span>, <span class="string">'Q_pv'</span>);  <span class="comment">% Load saved PV power values</span>
+</pre><h2 id="3"><b>*Step 3: Integrate PV at Bus 3</b>*</h2><pre class="codeinput"><span class="comment">%P_pv = 120e6;   % PV Active Power (W)</span>
+<span class="comment">%Q_pv = 40e6;    % PV Reactive Power (VAR)</span>
+S_base = 100e6; <span class="comment">% System Base Power</span>
+
+P_pu = P_pv / S_base;
+Q_pu = Q_pv / S_base;
+
+<span class="comment">% Adjust BusData: reduce the load at Bus 3 by the PV generation</span>
+BusData(3,7) = BusData(3,7) - P_pu; <span class="comment">% Adjust real power demand</span>
+BusData(3,8) = BusData(3,8) - Q_pu; <span class="comment">% Adjust reactive power demand</span>
+
+fprintf(<span class="string">'PV System added at Bus 3: P = %.2f MW, Q = %.2f MVAR\n'</span>, P_pv, Q_pv);
+</pre><pre class="codeoutput">PV System added at Bus 3: P = 3101.20 MW, Q = 1501.98 MVAR
+</pre><h2 id="4">CPF Setup</h2><pre class="codeinput">maxiterations = 100;
+tolerance = 1e-3;
+
+<span class="comment">% Calculate Ybus using BusData and BranchData</span>
+Ybus = Calculate_Ybus(BusData, BranchData);
+
+<span class="comment">% Reorder the buses to line them up as Slack, PV, and PQ buses</span>
+posPV = BusData(:,4) == 2;          <span class="comment">% Logical index for PV buses</span>
+posSL = BusData(:,4) == 3;          <span class="comment">% Logical index for Slack buses</span>
+
+aux1 = (1 - posPV - posSL);
+aux1(aux1 == 1) = transpose(1:length(aux1(aux1 == 1)));
+auxPos = [transpose(1:length(posPV)) posPV + posSL aux1];
+
+N = max(BusData(:,1));
+
+<span class="comment">% ---- BEGIN: Setting Voltage and Angle (flat start) for Slack and PV buses ---</span>
+V = ones(N,1);
+d = zeros(N,1); <span class="comment">% Initialize all voltage angles to zero</span>
+<span class="comment">% Set initial voltage magnitudes from BusData for Slack and PV buses</span>
+V(posSL + posPV == 1) = BusData(posSL + posPV == 1, 5);
+<span class="comment">% ---- END: Setting Voltage and Angle ---</span>
+</pre><h2 id="5">Compute Scheduled Power Values</h2><p>Net scheduled power injections (generation minus load)</p><pre class="codeinput">Psch = BusData(:,9) - BusData(:,7);
+Qsch = BusData(:,10) - BusData(:,8);
+
+<span class="comment">% Reduced scheduled power for non-Slack buses</span>
+Pschred = Psch(posSL == 0);
+Qschred = Qsch((posSL + posPV) == 0);
+
+<span class="comment">% Reduced voltage magnitude and angle vectors</span>
+dred = d(posSL == 0);
+Vred = V((posSL + posPV) == 0);
+
+<span class="comment">% K matrix: column vector of scheduled PQ values</span>
+K = [Pschred; Qschred];
+
+tolerance = 1e-3;
+maxiterations = 25;
+
+<span class="comment">% --- USER INPUT: WHICH BUS CPF TO DO? ---</span>
+BusForCPF = 14;
+<span class="comment">% ----------------------------------------</span>
+</pre><h2 id="6">CPF - Phase 1: Using Load Change as Continuation Factor</h2><pre class="codeinput">sigma = 0.1;    <span class="comment">% Predictor step size</span>
+lambda = 0;     <span class="comment">% Initialize continuation parameter</span>
+
+Y_Vph1 = [];
+X_LamdaPh1 = [];
+
+<span class="keyword">while</span> true
+    <span class="comment">% Predictor Step: form the state vector [dred; Vred; lambda]</span>
+    d_V_L = [dred; Vred; lambda];
+    [~, J] = Jacobian_NRLF(Ybus, V, d, posSL, posPV); <span class="comment">% Calculate Jacobian matrix</span>
+    ek = [zeros(1, size(J,2)) 1];  <span class="comment">% Row vector with zeros and 1 at the end</span>
+    K = [Pschred; Qschred];        <span class="comment">% Scheduled power vector</span>
+    JKe = [J -K; ek];
+
+    <span class="comment">% Update state vector using the predictor step</span>
+    d_V_L = d_V_L + sigma * (JKe \ ek');
+    dred = d_V_L(1:length(dred));
+    d(posSL == 0) = dred;
+    Vred = d_V_L(length(dred) + (1:length(Vred)));
+    V(posSL + posPV == 0) = Vred;
+    lambda = d_V_L(end);
+
+    <span class="comment">% Corrector Step: Newton-Raphson load flow solution</span>
+    [V, d, Pcalc, Qcalc, dP, dQ, dPred, dQred, dPdQred, temp] = <span class="keyword">...</span>
+        NRLF(V, d, Ybus, lambda * Psch, lambda * Qsch, posSL, posPV, tolerance, maxiterations);
+
+    <span class="keyword">if</span> temp &lt; maxiterations
+        Y_Vph1 = [Y_Vph1; V(BusForCPF)];
+        X_LamdaPh1 = [X_LamdaPh1; lambda];
+        Last_d = d;
+        Last_V = V;
+        Last_LamdaPh1 = lambda;
+    <span class="keyword">else</span>
+        <span class="comment">% If NR does not converge, revert to the last converged iteration</span>
+        d = Last_d;
+        V = Last_V;
+        lambda = Last_LamdaPh1;
+        dred = d(posSL == 0);
+        Vred = V((posSL + posPV) == 0);
+        <span class="keyword">break</span>;
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre><h2 id="7">CPF - Phase 2: Changing the Continuation Parameter to Voltage at a Bus</h2><pre class="codeinput">sigma = 0.005;   <span class="comment">% Smaller predictor step size</span>
+Last_Lamda = Last_LamdaPh1;
+Y_Vph2 = [];
+X_LamdaPh2 = [];
+
+<span class="keyword">while</span> true
+    <span class="comment">% Predictor Step</span>
+    d_V_L = [dred; Vred; lambda];
+    [~, J] = Jacobian_NRLF(Ybus, V, d, posSL, posPV);
+    ek = [zeros(1, length(dred) + length(Vred)) 0];
+    <span class="comment">% Set the bus voltage as the continuation variable for BusForCPF</span>
+    ek(length(dred) + auxPos(BusForCPF,3)) = -1;
+    JKe = [J -K; ek];
+    ZerosOne = [zeros(length(dred) + length(Vred), 1); 1];
+
+    <span class="comment">% Update state vector</span>
+    d_V_L = d_V_L + sigma * (JKe \ ZerosOne);
+    dred = d_V_L(1:length(dred));
+    d(posSL == 0) = dred;
+    Vred = d_V_L(length(dred) + (1:length(Vred)));
+    V(posSL + posPV == 0) = Vred;
+    lambda = d_V_L(end);
+
+    disp(<span class="string">'Predictor step -- [lambda value -- voltage at bus]'</span>);
+    disp([lambda, V(BusForCPF)]);
+
+    <span class="comment">% Corrector Step: adjustment via the Newton-Raphson method</span>
+    [~, J] = Jacobian_NRLF(Ybus, V, d, posSL, posPV);
+    [Pcalc, Qcalc, dP, dQ, dPred, dQred, dPdQred] = <span class="keyword">...</span>
+        Calculate_PcalcQcalc(V, d, Ybus, lambda * Psch, lambda * Qsch, posSL, posPV);
+    RHS = [dPdQred; 0];
+    JPh2 = [J -lambda * K; ek];
+    dddVredL = JPh2 \ RHS;
+
+    <span class="comment">% Update state variables with the correction</span>
+    d(posSL == 0) = d(posSL == 0) + dddVredL(1:N-1);
+    V(posSL + posPV == 0) = V(posSL + posPV == 0) + dddVredL(N:length(dddVredL)-1);
+    lambda = lambda + dddVredL(end);
+
+    dred = d(posSL == 0);
+    Vred = V((posSL + posPV) == 0);
+
+    Y_Vph2 = [Y_Vph2; V(BusForCPF)];
+    X_LamdaPh2 = [X_LamdaPh2; lambda];
+
+    <span class="keyword">if</span> lambda &gt; Last_Lamda
+        Last_Lamda = lambda;
+        LastV = V(BusForCPF);
+    <span class="keyword">end</span>
+    <span class="keyword">if</span> lambda &lt;= 0.75 * Last_LamdaPh1  <span class="comment">% changefactor condition</span>
+        <span class="keyword">break</span>;
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre><pre class="codeoutput">Predictor step -- [lambda value -- voltage at bus]
+    4.0097    0.7280
+
+Predictor step -- [lambda value -- voltage at bus]
+    4.0190    0.7230
+
+Predictor step -- [lambda value -- voltage at bus]
+    4.0278    0.7180
+
+Predictor step -- [lambda value -- voltage at bus]
+    4.0357    0.7130
+
+Predictor step -- [lambda value -- voltage at bus]
+    4.0427    0.7080
+
+Predictor step -- [lambda value -- voltage at bus]
+    4.0485    0.7030
+
+Predictor step -- [lambda value -- voltage at bus]
+    4.0531    0.6980
+
+Predictor step -- [lambda value -- voltage at bus]
+    4.0563    0.6930
+
+Predictor step -- [lambda value -- voltage at bus]
+    4.0580    0.6880
+
+Predictor step -- [lambda value -- voltage at bus]
+    4.0581    0.6830
+
+Predictor step -- [lambda value -- voltage at bus]
+    4.0565    0.6780
+
+Predictor step -- [lambda value -- voltage at bus]
+    4.0529    0.6730
+
+Predictor step -- [lambda value -- voltage at bus]
+    4.0472    0.6680
+
+Predictor step -- [lambda value -- voltage at bus]
+    4.0392    0.6630
+
+Predictor step -- [lambda value -- voltage at bus]
+    4.0286    0.6580
+
+Predictor step -- [lambda value -- voltage at bus]
+    4.0151    0.6530
+
+Predictor step -- [lambda value -- voltage at bus]
+    3.9983    0.6480
+
+Predictor step -- [lambda value -- voltage at bus]
+    3.9775    0.6430
+
+Predictor step -- [lambda value -- voltage at bus]
+    3.9518    0.6380
+
+Predictor step -- [lambda value -- voltage at bus]
+    3.9203    0.6330
+
+Predictor step -- [lambda value -- voltage at bus]
+    3.8810    0.6280
+
+Predictor step -- [lambda value -- voltage at bus]
+    3.8312    0.6230
+
+Predictor step -- [lambda value -- voltage at bus]
+    3.7663    0.6180
+
+Predictor step -- [lambda value -- voltage at bus]
+    3.6787    0.6130
+
+Predictor step -- [lambda value -- voltage at bus]
+    3.5602    0.6080
+
+Predictor step -- [lambda value -- voltage at bus]
+    3.4257    0.6030
+
+Predictor step -- [lambda value -- voltage at bus]
+    3.2900    0.5980
+
+Predictor step -- [lambda value -- voltage at bus]
+    3.1701    0.5930
+
+Predictor step -- [lambda value -- voltage at bus]
+    3.0565    0.5880
+
+Predictor step -- [lambda value -- voltage at bus]
+    2.9515    0.5830
+
+</pre><h2 id="8">CPF - Phase 3: Reverting the Continuation Parameter Back to Power</h2><pre class="codeinput">sigma = 0.1;  <span class="comment">% Reset predictor step size</span>
+Y_Vph3 = [];
+X_LamdaPh3 = [];
+
+<span class="keyword">while</span> true
+    <span class="comment">% Predictor Step</span>
+    d_V_L = [dred; Vred; lambda];
+    [~, J] = Jacobian_NRLF(Ybus, V, d, posSL, posPV);
+    ek = [zeros(1, size(J,2)) -1];
+    K = [Pschred; Qschred];
+    JKe = [J -K; ek];
+    d_V_L = d_V_L + sigma * (JKe \ abs(ek)');
+
+    dred = d_V_L(1:length(dred));
+    d(posSL == 0) = dred;
+    Vred = d_V_L(length(dred) + (1:length(Vred)));
+    V(posSL + posPV == 0) = Vred;
+    lambda = d_V_L(end);
+
+    <span class="comment">% Corrector Step</span>
+    [V, d, Pcalc, Qcalc, dP, dQ, dPred, dQred, dPdQred, temp] = <span class="keyword">...</span>
+        NRLF(V, d, Ybus, lambda * Psch, lambda * Qsch, posSL, posPV, tolerance, maxiterations);
+
+    <span class="keyword">if</span> temp &lt; maxiterations &amp;&amp; lambda &gt;= 0
+        Y_Vph3 = [Y_Vph3; V(BusForCPF)];
+        X_LamdaPh3 = [X_LamdaPh3; lambda];
+    <span class="keyword">else</span>
+        <span class="keyword">break</span>;
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre><h2 id="9">Plot Loadability Curve</h2><pre class="codeinput">figure;
+plot(X_LamdaPh1, Y_Vph1, <span class="string">'-og'</span>, X_LamdaPh2, Y_Vph2, <span class="string">'-*k'</span>, X_LamdaPh3, Y_Vph3, <span class="string">'-^r'</span>, <span class="string">'LineWidth'</span>, 2)
+xlabel(<span class="string">'lambda'</span>, <span class="string">'FontSize'</span>, 10)
+ylabel(<span class="string">'Voltage (P.U.)'</span>, <span class="string">'FontSize'</span>, 10)
+title(strcat(<span class="string">'Loadability Curve for Bus #'</span>, num2str(BusForCPF)), <span class="string">'FontSize'</span>, 12)
+grid <span class="string">on</span>
+xlim([0 4.5])
+ylim([0 1.2])
+</pre><img vspace="5" hspace="5" src="main_01.png" style="width:560px;height:420px;" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2016b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+% CPF with PV Integration
+
+clc; 
+clear all;
+close all;
+
+% Read system data (this should load BusData and BranchData)
+ReadData;
+
+%% **Step 1: Load PV Data from File**
+load('PVData.mat', 'P_pv', 'Q_pv');  % Load saved PV power values
+
+%% **Step 3: Integrate PV at Bus 3**
+%P_pv = 120e6;   % PV Active Power (W)
+%Q_pv = 40e6;    % PV Reactive Power (VAR)
+S_base = 100e6; % System Base Power
+
+P_pu = P_pv / S_base;
+Q_pu = Q_pv / S_base;
+
+% Adjust BusData: reduce the load at Bus 3 by the PV generation
+BusData(3,7) = BusData(3,7) - P_pu; % Adjust real power demand
+BusData(3,8) = BusData(3,8) - Q_pu; % Adjust reactive power demand
+
+fprintf('PV System added at Bus 3: P = %.2f MW, Q = %.2f MVAR\n', P_pv, Q_pv);
+
+%% CPF Setup
+maxiterations = 100;
+tolerance = 1e-3;
+
+% Calculate Ybus using BusData and BranchData
+Ybus = Calculate_Ybus(BusData, BranchData);
+
+% Reorder the buses to line them up as Slack, PV, and PQ buses
+posPV = BusData(:,4) == 2;          % Logical index for PV buses
+posSL = BusData(:,4) == 3;          % Logical index for Slack buses
+
+aux1 = (1 - posPV - posSL);
+aux1(aux1 == 1) = transpose(1:length(aux1(aux1 == 1)));
+auxPos = [transpose(1:length(posPV)) posPV + posSL aux1];
+
+N = max(BusData(:,1));
+
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH BEGIN: Setting Voltage and Angle (flat start) for Slack and PV buses REPLACE_WITH_DASH_DASH-
+V = ones(N,1);
+d = zeros(N,1); % Initialize all voltage angles to zero
+% Set initial voltage magnitudes from BusData for Slack and PV buses
+V(posSL + posPV == 1) = BusData(posSL + posPV == 1, 5);
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH END: Setting Voltage and Angle REPLACE_WITH_DASH_DASH-
+
+%% Compute Scheduled Power Values
+% Net scheduled power injections (generation minus load)
+Psch = BusData(:,9) - BusData(:,7);
+Qsch = BusData(:,10) - BusData(:,8);
+
+% Reduced scheduled power for non-Slack buses
+Pschred = Psch(posSL == 0);
+Qschred = Qsch((posSL + posPV) == 0);
+
+% Reduced voltage magnitude and angle vectors
+dred = d(posSL == 0);
+Vred = V((posSL + posPV) == 0);
+
+% K matrix: column vector of scheduled PQ values
+K = [Pschred; Qschred];
+
+tolerance = 1e-3;
+maxiterations = 25;
+
+% REPLACE_WITH_DASH_DASH- USER INPUT: WHICH BUS CPF TO DO? REPLACE_WITH_DASH_DASH-
+BusForCPF = 14;
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+
+%% CPF - Phase 1: Using Load Change as Continuation Factor
+sigma = 0.1;    % Predictor step size
+lambda = 0;     % Initialize continuation parameter
+
+Y_Vph1 = [];
+X_LamdaPh1 = [];
+
+while true
+    % Predictor Step: form the state vector [dred; Vred; lambda]
+    d_V_L = [dred; Vred; lambda];
+    [~, J] = Jacobian_NRLF(Ybus, V, d, posSL, posPV); % Calculate Jacobian matrix
+    ek = [zeros(1, size(J,2)) 1];  % Row vector with zeros and 1 at the end
+    K = [Pschred; Qschred];        % Scheduled power vector
+    JKe = [J -K; ek];
+    
+    % Update state vector using the predictor step
+    d_V_L = d_V_L + sigma * (JKe \ ek');
+    dred = d_V_L(1:length(dred));
+    d(posSL == 0) = dred;
+    Vred = d_V_L(length(dred) + (1:length(Vred)));
+    V(posSL + posPV == 0) = Vred;
+    lambda = d_V_L(end);
+    
+    % Corrector Step: Newton-Raphson load flow solution
+    [V, d, Pcalc, Qcalc, dP, dQ, dPred, dQred, dPdQred, temp] = ...
+        NRLF(V, d, Ybus, lambda * Psch, lambda * Qsch, posSL, posPV, tolerance, maxiterations);
+    
+    if temp < maxiterations
+        Y_Vph1 = [Y_Vph1; V(BusForCPF)]; 
+        X_LamdaPh1 = [X_LamdaPh1; lambda];
+        Last_d = d;
+        Last_V = V;
+        Last_LamdaPh1 = lambda;
+    else
+        % If NR does not converge, revert to the last converged iteration
+        d = Last_d;
+        V = Last_V;
+        lambda = Last_LamdaPh1;
+        dred = d(posSL == 0);
+        Vred = V((posSL + posPV) == 0);
+        break;
+    end
+end
+
+%% CPF - Phase 2: Changing the Continuation Parameter to Voltage at a Bus
+sigma = 0.005;   % Smaller predictor step size
+Last_Lamda = Last_LamdaPh1;
+Y_Vph2 = [];
+X_LamdaPh2 = [];
+
+while true
+    % Predictor Step
+    d_V_L = [dred; Vred; lambda];
+    [~, J] = Jacobian_NRLF(Ybus, V, d, posSL, posPV);
+    ek = [zeros(1, length(dred) + length(Vred)) 0];
+    % Set the bus voltage as the continuation variable for BusForCPF
+    ek(length(dred) + auxPos(BusForCPF,3)) = -1;
+    JKe = [J -K; ek];
+    ZerosOne = [zeros(length(dred) + length(Vred), 1); 1];
+    
+    % Update state vector
+    d_V_L = d_V_L + sigma * (JKe \ ZerosOne);
+    dred = d_V_L(1:length(dred));
+    d(posSL == 0) = dred;
+    Vred = d_V_L(length(dred) + (1:length(Vred)));
+    V(posSL + posPV == 0) = Vred;
+    lambda = d_V_L(end);
+    
+    disp('Predictor step REPLACE_WITH_DASH_DASH [lambda value REPLACE_WITH_DASH_DASH voltage at bus]');
+    disp([lambda, V(BusForCPF)]);
+    
+    % Corrector Step: adjustment via the Newton-Raphson method
+    [~, J] = Jacobian_NRLF(Ybus, V, d, posSL, posPV);
+    [Pcalc, Qcalc, dP, dQ, dPred, dQred, dPdQred] = ...
+        Calculate_PcalcQcalc(V, d, Ybus, lambda * Psch, lambda * Qsch, posSL, posPV);
+    RHS = [dPdQred; 0];
+    JPh2 = [J -lambda * K; ek];
+    dddVredL = JPh2 \ RHS;
+    
+    % Update state variables with the correction
+    d(posSL == 0) = d(posSL == 0) + dddVredL(1:N-1);
+    V(posSL + posPV == 0) = V(posSL + posPV == 0) + dddVredL(N:length(dddVredL)-1);
+    lambda = lambda + dddVredL(end);
+    
+    dred = d(posSL == 0);
+    Vred = V((posSL + posPV) == 0);
+    
+    Y_Vph2 = [Y_Vph2; V(BusForCPF)]; 
+    X_LamdaPh2 = [X_LamdaPh2; lambda];
+    
+    if lambda > Last_Lamda
+        Last_Lamda = lambda;
+        LastV = V(BusForCPF);
+    end
+    if lambda <= 0.75 * Last_LamdaPh1  % changefactor condition
+        break;
+    end
+end
+
+%% CPF - Phase 3: Reverting the Continuation Parameter Back to Power
+sigma = 0.1;  % Reset predictor step size
+Y_Vph3 = [];
+X_LamdaPh3 = [];
+
+while true
+    % Predictor Step
+    d_V_L = [dred; Vred; lambda];
+    [~, J] = Jacobian_NRLF(Ybus, V, d, posSL, posPV);
+    ek = [zeros(1, size(J,2)) -1];
+    K = [Pschred; Qschred];
+    JKe = [J -K; ek];
+    d_V_L = d_V_L + sigma * (JKe \ abs(ek)');
+    
+    dred = d_V_L(1:length(dred));
+    d(posSL == 0) = dred;
+    Vred = d_V_L(length(dred) + (1:length(Vred)));
+    V(posSL + posPV == 0) = Vred;
+    lambda = d_V_L(end);
+    
+    % Corrector Step
+    [V, d, Pcalc, Qcalc, dP, dQ, dPred, dQred, dPdQred, temp] = ...
+        NRLF(V, d, Ybus, lambda * Psch, lambda * Qsch, posSL, posPV, tolerance, maxiterations);
+    
+    if temp < maxiterations && lambda >= 0
+        Y_Vph3 = [Y_Vph3; V(BusForCPF)]; 
+        X_LamdaPh3 = [X_LamdaPh3; lambda];
+    else
+        break;
+    end
+end
+
+%% Plot Loadability Curve
+figure;
+plot(X_LamdaPh1, Y_Vph1, '-og', X_LamdaPh2, Y_Vph2, '-*k', X_LamdaPh3, Y_Vph3, '-^r', 'LineWidth', 2)
+xlabel('lambda', 'FontSize', 10)
+ylabel('Voltage (P.U.)', 'FontSize', 10)
+title(strcat('Loadability Curve for Bus #', num2str(BusForCPF)), 'FontSize', 12)
+grid on
+xlim([0 4.5])
+ylim([0 1.2])
+
+##### SOURCE END #####
+--></body></html>
