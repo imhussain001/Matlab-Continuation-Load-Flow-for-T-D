@@ -1,0 +1,284 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>pvmpdel3</title><meta name="generator" content="MATLAB 9.1"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2025-03-11"><meta name="DC.source" content="pvmpdel3.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#2">Step 1: Solar PV System Modeling</a></li><li><a href="#3">Step 2: Reactive Power Calculation</a></li><li><a href="#4">Step 3: Boost Converter Modeling</a></li><li><a href="#5">Step 4: Inverter Conversion and Grid Synchronization</a></li><li><a href="#6">Step 5: Power Exchange with Grid</a></li><li><a href="#7">Step 6: Plot Results</a></li><li><a href="#8">Step 6: Plot Results</a></li><li><a href="#9">Print results</a></li></ul></div><pre class="codeinput">clear <span class="string">all</span>;
+close <span class="string">all</span>;
+
+<span class="comment">% Hussain Tak</span>
+</pre><h2 id="2">Step 1: Solar PV System Modeling</h2><p>Constants</p><pre class="codeinput">K = 1.38065e-23; <span class="comment">% Boltzmann Constant</span>
+q = 1.602e-19;   <span class="comment">% Electron's Charge</span>
+Iscn = 8.21;     <span class="comment">% Short Circuit Current (A)</span>
+Vocn = 32.9;     <span class="comment">% Open Circuit Voltage (V)</span>
+Ns = 72;         <span class="comment">% Number of series cells per panel</span>
+T = 25 + 273;    <span class="comment">% Operating Temperature in Kelvin</span>
+Gn = 1000;       <span class="comment">% Irradiance at STC (W/m^2)</span>
+G = 1000;        <span class="comment">% Actual Irradiance (W/m^2)</span>
+Rs = 0.15;       <span class="comment">% Series resistance (?)</span>
+Rp = 500;        <span class="comment">% Parallel resistance (?)</span>
+
+<span class="comment">% PV Model Calculations</span>
+Vtn = Ns * ((K * T) / q);
+I0 = Iscn / (exp(Vocn / (2 * Vtn)) - 1); <span class="comment">% Reverse saturation current</span>
+Ipv = (G / Gn) * Iscn; <span class="comment">% Photocurrent</span>
+
+<span class="comment">% Generate I-V Curve using Newton-Raphson</span>
+V = linspace(0, Vocn, 100);
+I = zeros(size(V));
+
+<span class="keyword">for</span> k = 1:length(V)
+    Ik = Ipv; <span class="comment">% Initial guess for current</span>
+    <span class="keyword">for</span> j = 1:10 <span class="comment">% Newton-Raphson iterations</span>
+        f = Ik - Ipv + I0 * (exp((V(k) + Ik * Rs) / (Vtn * 2)) - 1) + (V(k) + Ik * Rs) / Rp;
+        df = 1 + I0 * (Rs / (Vtn * 2)) * exp((V(k) + Ik * Rs) / (Vtn * 2)) + Rs / Rp;
+        Ik = Ik - f / df;
+    <span class="keyword">end</span>
+    I(k) = Ik;
+<span class="keyword">end</span>
+
+<span class="comment">% Power Calculation</span>
+P = V .* I;
+[~, idx] = max(P);
+Vmp_single = V(idx); <span class="comment">% MPP Voltage of One Panel</span>
+Ipv_mpp = I(idx);
+Ppv_mpp = P(idx);
+
+<span class="comment">% Calculate Number of Panels in Series</span>
+Vpv_target = 440; <span class="comment">% Desired input voltage for the boost converter</span>
+N_panels = ceil(Vpv_target / Vmp_single);
+Vpv = N_panels * Vmp_single; <span class="comment">% Adjusted MPP voltage for the full array</span>
+
+<span class="comment">% Total PV Active Power Generation</span>
+P_pv = Ppv_mpp * N_panels;
+</pre><h2 id="3">Step 2: Reactive Power Calculation</h2><p>Assume PV inverter operates at a specific power factor</p><pre class="codeinput">pf = 0.85; <span class="comment">% Can be adjusted (leading or lagging)</span>
+S_pv = P_pv / pf; <span class="comment">% Apparent power of inverter</span>
+Q_pv = sqrt(S_pv^2 - P_pv^2); <span class="comment">% Reactive power calculation</span>
+
+<span class="comment">% Ensure reactive power is within inverter capacity</span>
+Q_pv = min(Q_pv, S_pv);
+</pre><h2 id="4">Step 3: Boost Converter Modeling</h2><pre class="codeinput">Vdc_target = 800; <span class="comment">% Target output voltage</span>
+D = 1 - (Vpv / Vdc_target);
+D = min(max(D, 0.5), 0.7); <span class="comment">% Limit duty cycle</span>
+
+Vdc_actual = Vpv / (1 - D); <span class="comment">% Boosted voltage</span>
+I_L = P_pv / Vpv;
+</pre><h2 id="5">Step 4: Inverter Conversion and Grid Synchronization</h2><pre class="codeinput">V_grid = 400;
+M = (V_grid * sqrt(2)) / Vdc_actual;
+M = min(max(M, 0), 1); <span class="comment">% Ensure M is within range</span>
+</pre><h2 id="6">Step 5: Power Exchange with Grid</h2><pre class="codeinput">P_steady_state = P_pv;  <span class="comment">% PV fully supplies active power</span>
+Q_steady_state = Q_pv;  <span class="comment">% PV also supplies reactive power</span>
+
+<span class="comment">% After calculating P_pv and Q_pv in pv_model.m</span>
+save(<span class="string">'pv_data.mat'</span>, <span class="string">'P_pv'</span>, <span class="string">'Q_pv'</span>);  <span class="comment">% Save to a .mat file</span>
+</pre><h2 id="7">Step 6: Plot Results</h2><h2 id="8">Step 6: Plot Results</h2><pre class="codeinput">figure(1);
+plot(V, I, <span class="string">'r'</span>, <span class="string">'LineWidth'</span>, 2);
+xlabel(<span class="string">'Voltage (V)'</span>);
+ylabel(<span class="string">'Current (A)'</span>);
+title(<span class="string">'I-V Characteristics of Solar PV'</span>);
+grid <span class="string">on</span>;
+
+figure(2);
+plot(V, P, <span class="string">'k'</span>, <span class="string">'LineWidth'</span>, 2);
+xlabel(<span class="string">'Voltage (V)'</span>);
+ylabel(<span class="string">'Power (W)'</span>);
+title(<span class="string">'P-V Characteristics of Solar PV'</span>);
+grid <span class="string">on</span>;
+
+figure(3);
+bar([P_steady_state, Q_steady_state]);
+set(gca, <span class="string">'XTickLabel'</span>, {<span class="string">'Active Power (P)'</span>, <span class="string">'Reactive Power (Q)'</span>});
+ylabel(<span class="string">'Power (W)'</span>);
+title(<span class="string">'Steady-State Power Supplied by PV System'</span>);
+grid <span class="string">on</span>;
+</pre><img vspace="5" hspace="5" src="pvmpdel3_01.png" style="width:560px;height:420px;" alt=""> <img vspace="5" hspace="5" src="pvmpdel3_02.png" style="width:560px;height:420px;" alt=""> <img vspace="5" hspace="5" src="pvmpdel3_03.png" style="width:560px;height:420px;" alt=""> <h2 id="9">Print results</h2><pre class="codeinput">fprintf(<span class="string">'\n------ PV Power Supply ------\n'</span>);
+fprintf(<span class="string">'Total Active Power Supplied by PV: %.2f W\n'</span>, P_steady_state);
+fprintf(<span class="string">'Total Reactive Power Supplied by PV: %.2f VAR\n'</span>, Q_steady_state);
+fprintf(<span class="string">'Grid Voltage: %.2f V\n'</span>, V_grid);
+fprintf(<span class="string">'Boost Converter Output Voltage: %.2f V\n'</span>, Vdc_actual);
+fprintf(<span class="string">'Inverter Modulation Index: %.2f\n'</span>, M);
+</pre><pre class="codeoutput">
+------ PV Power Supply ------
+Total Active Power Supplied by PV: 3101.20 W
+Total Reactive Power Supplied by PV: 1921.95 VAR
+Grid Voltage: 400.00 V
+Boost Converter Output Voltage: 885.31 V
+Inverter Modulation Index: 0.64
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2016b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+clear all;
+close all;
+
+% Hussain Tak
+
+%% Step 1: Solar PV System Modeling
+% Constants
+K = 1.38065e-23; % Boltzmann Constant
+q = 1.602e-19;   % Electron's Charge
+Iscn = 8.21;     % Short Circuit Current (A)
+Vocn = 32.9;     % Open Circuit Voltage (V)
+Ns = 72;         % Number of series cells per panel
+T = 25 + 273;    % Operating Temperature in Kelvin
+Gn = 1000;       % Irradiance at STC (W/m^2)
+G = 1000;        % Actual Irradiance (W/m^2)
+Rs = 0.15;       % Series resistance (?)
+Rp = 500;        % Parallel resistance (?)
+
+% PV Model Calculations
+Vtn = Ns * ((K * T) / q);
+I0 = Iscn / (exp(Vocn / (2 * Vtn)) - 1); % Reverse saturation current
+Ipv = (G / Gn) * Iscn; % Photocurrent
+
+% Generate I-V Curve using Newton-Raphson
+V = linspace(0, Vocn, 100);
+I = zeros(size(V));
+
+for k = 1:length(V)
+    Ik = Ipv; % Initial guess for current
+    for j = 1:10 % Newton-Raphson iterations
+        f = Ik - Ipv + I0 * (exp((V(k) + Ik * Rs) / (Vtn * 2)) - 1) + (V(k) + Ik * Rs) / Rp;
+        df = 1 + I0 * (Rs / (Vtn * 2)) * exp((V(k) + Ik * Rs) / (Vtn * 2)) + Rs / Rp;
+        Ik = Ik - f / df;
+    end
+    I(k) = Ik;
+end
+
+% Power Calculation
+P = V .* I;
+[~, idx] = max(P);
+Vmp_single = V(idx); % MPP Voltage of One Panel
+Ipv_mpp = I(idx);
+Ppv_mpp = P(idx);
+
+% Calculate Number of Panels in Series
+Vpv_target = 440; % Desired input voltage for the boost converter
+N_panels = ceil(Vpv_target / Vmp_single);
+Vpv = N_panels * Vmp_single; % Adjusted MPP voltage for the full array
+
+% Total PV Active Power Generation
+P_pv = Ppv_mpp * N_panels;
+
+%% Step 2: Reactive Power Calculation
+% Assume PV inverter operates at a specific power factor
+pf = 0.85; % Can be adjusted (leading or lagging)
+S_pv = P_pv / pf; % Apparent power of inverter
+Q_pv = sqrt(S_pv^2 - P_pv^2); % Reactive power calculation
+
+% Ensure reactive power is within inverter capacity
+Q_pv = min(Q_pv, S_pv);
+
+%% Step 3: Boost Converter Modeling
+Vdc_target = 800; % Target output voltage
+D = 1 - (Vpv / Vdc_target);
+D = min(max(D, 0.5), 0.7); % Limit duty cycle
+
+Vdc_actual = Vpv / (1 - D); % Boosted voltage
+I_L = P_pv / Vpv;
+
+%% Step 4: Inverter Conversion and Grid Synchronization
+V_grid = 400;
+M = (V_grid * sqrt(2)) / Vdc_actual;
+M = min(max(M, 0), 1); % Ensure M is within range
+
+%% Step 5: Power Exchange with Grid
+P_steady_state = P_pv;  % PV fully supplies active power
+Q_steady_state = Q_pv;  % PV also supplies reactive power
+
+% After calculating P_pv and Q_pv in pv_model.m
+save('pv_data.mat', 'P_pv', 'Q_pv');  % Save to a .mat file
+
+%% Step 6: Plot Results
+%% Step 6: Plot Results
+figure(1);
+plot(V, I, 'r', 'LineWidth', 2);
+xlabel('Voltage (V)');
+ylabel('Current (A)');
+title('I-V Characteristics of Solar PV');
+grid on;
+
+figure(2);
+plot(V, P, 'k', 'LineWidth', 2);
+xlabel('Voltage (V)');
+ylabel('Power (W)');
+title('P-V Characteristics of Solar PV');
+grid on;
+
+figure(3);
+bar([P_steady_state, Q_steady_state]);
+set(gca, 'XTickLabel', {'Active Power (P)', 'Reactive Power (Q)'});
+ylabel('Power (W)');
+title('Steady-State Power Supplied by PV System');
+grid on;
+
+%% Print results 
+fprintf('\nREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH PV Power Supply REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH\n');
+fprintf('Total Active Power Supplied by PV: %.2f W\n', P_steady_state);
+fprintf('Total Reactive Power Supplied by PV: %.2f VAR\n', Q_steady_state);
+fprintf('Grid Voltage: %.2f V\n', V_grid);
+fprintf('Boost Converter Output Voltage: %.2f V\n', Vdc_actual);
+fprintf('Inverter Modulation Index: %.2f\n', M);
+##### SOURCE END #####
+--></body></html>
